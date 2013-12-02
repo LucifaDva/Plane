@@ -1,0 +1,41 @@
+{% extends "index.html" %}
+{% block title %}探针查询结果{% endblock %}
+{% block content %}
+ <div class="content">
+   {% if ve %}
+   {% if ve.has_previous %}
+     <a href="?page={{ve.previous_page_number}}">上一页</a>
+   {% endif %}
+   Page {{ve.number}} of {{ve.paginator.num_pages}}.
+   {% if ve.has_next %}
+      <a href="?page={{ve.next_page_number}}">下一页</a>
+   {% endif %}
+   <table border="1">
+     <tr background-color:#CCCCFF>
+       <th>Icao</th>
+       <th>Seen</th>
+       <th>Speed</th>
+       <th>Heading</th>
+       <th>vertical</th>
+       <th>Probe_name</th>
+       <th>Probe_province</th>
+       <th>Probe_gps<th>
+     </tr>
+     {% for p in ve %}
+     <tr>
+       <td>{{p.icao}}</td>
+       <td>{{p.seen}}</td>
+       <td>{{p.speed}}</td>
+       <td>{{p.heading}}</td>
+       <td>{{p.vertical}}</td>
+       <td>{{p.probe.probe_name}}</td>
+       <td>{{p.probe.province}}</td>
+       <td>{{p.probe.gps}}</td>
+     </tr>
+     {% endfor %}
+   </table>
+   {% else %}
+       <h2>查询结果个数为0</h2>
+   {% endif %}
+ </div>
+{% endblock %}

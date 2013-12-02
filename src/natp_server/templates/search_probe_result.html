@@ -1,0 +1,33 @@
+{% extends "index.html" %}
+{% block title %}探针查询结果{% endblock %}
+{% block content %}
+ <div class="content">
+   {% if pro %}
+   {% if pro.has_previous %}
+      <a href="?page=1">首页</a>
+      <a href="?page={{pro.previous_page_number}}">上一页</a>
+   {% endif %}
+   Page {{pro.number}} of {{pro.paginator.num_pages}}
+   {% if pro.has_next %}
+         <a href="?page={{pro.next_page_number}}">下一页</a>
+        <a href="?page={{pro.paginator.num_pages}}">尾页</a>
+   {% endif %}
+   <table border="1">
+     <tr background-color:#CCCCFF>
+       <th>Probe_name</th>
+       <th>Province</th>
+       <th>GPS</th>
+     </tr>
+     {% for p in pro %}
+     <tr>
+       <td>{{p.probe_name}}</td>
+       <td>{{p.province}}</td>
+       <td>{{p.gps}}</td>
+     </tr>
+     {% endfor %}
+   </table>
+   {% else %}
+      <h2>查询结果个数为0</h2>
+    {% endif %}
+ </div>
+{% endblock %}

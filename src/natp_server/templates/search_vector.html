@@ -1,0 +1,29 @@
+{% extends "index.html" %}
+{% block title %}查询Vector{% endblock%}
+{% block content%}
+<div class="content">
+  {% if errors %}
+     <ul>
+       {% for error in errors %}
+       <li>{{error}}</li>
+       {% endfor %}
+     </ul>
+  {% endif %}
+  <h3>查询Vector</h3>
+  <form method="post" action="">
+       {% csrf_token %}
+     <p>Icao：<input type="text" name="icao">
+         Seen：<input type="text" name="seen">
+         speed：<input type="text" name="speed">
+         heading:<input type="text" name="heading">
+         vertical:<input type="text" name="vertical">
+         Probe:<select>
+             <option></option>
+               {% for probe in probes %}
+                     <option>{{probe.probe_name}}</option>
+               {% endfor %}
+         </selest><br/>
+         <input type="submit" name="Submit" value="Search"></p>
+  </form>
+</div>
+{% endblock %}
