@@ -3,13 +3,22 @@
 {% block content %}
  <div class="content">
    {% if ve %}
+   <table class="page"><tr>
    {% if ve.has_previous %}
-     <a href="?page={{ve.previous_page_number}}">上一页</a>
+     <td><a href="?page=1">首页</a></td>
+     <td><a href="?page={{ve.previous_page_number}}">上一页</a></td>
    {% endif %}
-   Page {{ve.number}} of {{ve.paginator.num_pages}}.
+   <td>第{{ve.number}}页      共{{ve.paginator.num_pages}}页</td>
    {% if ve.has_next %}
-      <a href="?page={{ve.next_page_number}}">下一页</a>
+      <td><a href="?page={{ve.next_page_number}}">下一页</a></td>
+      <td><a href="?page={{ve.paginator.num_pages}}">尾页</a></td>
    {% endif %}
+   <form action="" method="get">
+    <td><table class="page"><tr><td>
+      <input type="text" name="page" class="gobutton"></td>
+            <td><input type="submit" name="go" value="Go" class="gobutton">
+            </td></tr></table></td></tr>
+   </form></table>
    <table border="1">
      <tr background-color:#CCCCFF>
        <th>Icao</th>
@@ -23,14 +32,14 @@
      </tr>
      {% for p in ve %}
      <tr>
-       <td>{{p.icao}}</td>
-       <td>{{p.seen}}</td>
-       <td>{{p.speed}}</td>
-       <td>{{p.heading}}</td>
-       <td>{{p.vertical}}</td>
-       <td>{{p.probe.probe_name}}</td>
-       <td>{{p.probe.province}}</td>
-       <td>{{p.probe.gps}}</td>
+       <td class="data_table">{{p.icao}}</td>
+       <td class="data_table">{{p.seen}}</td>
+       <td class="data_table">{{p.speed}}</td>
+       <td class="data_table">{{p.heading}}</td>
+       <td class="data_table">{{p.vertical}}</td>
+       <td class="data_table">{{p.probe.probe_name}}</td>
+       <td class="data_table">{{p.probe.province}}</td>
+       <td class="data_table">{{p.probe.gps}}</td>
      </tr>
      {% endfor %}
    </table>

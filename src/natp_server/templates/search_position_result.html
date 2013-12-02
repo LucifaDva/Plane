@@ -3,15 +3,22 @@
 {% block content %}
  <div class="content">
    {% if po %}
+   <table class="page"><tr>
    {% if po.has_previous %}
-        <a href="?page=1">首页</a>
-       <a href="?page={{po.previous_page_number}}">上一页</a>
+        <td><a href="?page=1">首页</a></td>
+       <td><a href="?page={{po.previous_page_number}}">上一页</a></td>
    {% endif %}
-   Page {{po.number}} of {{po.paginator.num_pages}}
+  <td>第{{po.number}}页      共{{po.paginator.num_pages}}页</td>
    {% if po.has_next %}
-         <a href="?page={{po.next_page_number}}">下一页</a>
-        <a href="?page={{po.paginator.num_pages}}">尾页</a>
+         <td><a href="?page={{po.next_page_number}}">下一页</a></td>
+        <td><a href="?page={{po.paginator.num_pages}}">尾页</a></td>
    {% endif %}
+    <form action="" method="get">
+    <td><table class="page"><tr><td>
+      <input type="text" name="page" class="gobutton"></td>
+            <td><input type="submit" name="go" value="Go" class="gobutton">
+            </td></tr></table></td></tr>
+   </form></table>
    <table border="1">
      <tr background-color:#CCCCFF>
        <th>Icao</th>
@@ -25,14 +32,14 @@
      </tr>
      {% for p in po %}
      <tr>
-       <td>{{p.icao}}</td>
-       <td>{{p.seen}}</td>
-       <td>{{p.alt}}</td>
-       <td>{{p.lat}}</td>
-       <td>{{p.lon}}</td>
-       <td>{{p.probe.probe_name}}</td>
-       <td>{{p.probe.province}}</td>
-       <td>{{p.probe.gps}}</td>
+       <td class="data_table">{{p.icao}}</td>
+       <td class="data_table">{{p.seen}}</td>
+       <td class="data_table">{{p.alt}}</td>
+       <td class="data_table">{{p.lat}}</td>
+       <td class="data_table">{{p.lon}}</td>
+       <td class="data_table">{{p.probe.probe_name}}</td>
+       <td class="data_table">{{p.probe.province}}</td>
+       <td class="data_table">{{p.probe.gps}}</td>
      </tr>
      {% endfor %}
    </table>

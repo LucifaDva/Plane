@@ -65,7 +65,6 @@ def login(request, template_name='login.html',
     return TemplateResponse(request, template_name, context,
                             current_app=current_app)
 
-
 def logout(request, next_page=None,
            template_name='login.html',
            redirect_field_name=REDIRECT_FIELD_NAME,
@@ -74,8 +73,8 @@ def logout(request, next_page=None,
     Logs out the user and displays 'You are logged out' message.
     """
     auth_logout(request)
-
     return HttpResponseRedirect('/')
+
 
 
 

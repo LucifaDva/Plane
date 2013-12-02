@@ -44,7 +44,7 @@ def parse_period(period):
     return ret
 
 def write_to_xml(_retstr):
-    file_name = '../output/trace_out.kml'
+    file_name = 'output/trace_out.kml'
     with open(file_name, 'w') as f:
         f.write(_retstr)      # overwrite
     return file_name

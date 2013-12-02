@@ -94,6 +94,9 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.CacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -139,6 +142,16 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+
+#CACHES = {
+#  'default':{
+#    'BACKEND':'django.core.cache.backends.memcached.MemcachedCache',
+#    'LOCATION':'127.0.0.1:11211',
+#  }
+#}
+
+CACHE_BACKEND = 'db://my_cache_table'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

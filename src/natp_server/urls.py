@@ -6,6 +6,7 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
 import views, authorize, search, kml
+from django.views.decorators.cache import cache_page
 
 urlpatterns = patterns('',
     # Examples:
@@ -24,11 +25,12 @@ urlpatterns = patterns('',
     url(r'^natp_server/$', views.index),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^add_probe/$',views.add_probe),
-    url(r'^show_probe/$',views.show_probe),
-    url(r'^show_ident/$',views.show_ident),
-    url(r'^show_position/$',views.show_position),
 
-    url(r'^show_vector/$', views.show_vector),
+    url(r'^show_probe/$',views.show_probe),
+    url(r'^show_ident/$',cache_page(views.show_ident,60)),
+    url(r'^show_position/$',cache_page(views.show_position,60)),
+    url(r'^show_vector/$', cache_page(views.show_vector,60)),
+
     url(r'^save_db/$', views.update_from_file),
     url(r'^report/$', views.update_from_report),
     url(r'^kml/$', kml.output_kml),

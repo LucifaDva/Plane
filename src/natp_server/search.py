@@ -84,7 +84,7 @@ def search_position(request):
     if probe:
         po = po.filter(probe=probe)
     
-    return render_to_response('search_position_result.html',{'po':po},context_instance=RequestContext(request))
+    return render_to_response('search_position_result.html',{'po':po,'probes':probes},context_instance=RequestContext(request))
 
 @login_required
 def search_vector(request):
@@ -156,7 +156,6 @@ def search_ident(request):
     else:
         probe=""
     if not icao and not ident and not probe:
-       errors.append('Please input conditions!')
        return render_to_response('search_ident.html',{'probes':probes},context_instance=RequestContext(request))
     if icao:
         idt = idt.filter(icao=icao)

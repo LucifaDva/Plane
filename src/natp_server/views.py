@@ -6,6 +6,7 @@ from django.http import HttpResponseRedirect
 from django.template import RequestContext
 from django.contrib import auth
 from django import forms
+import MySQLdb
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate,login,logout
 from util import get_data, handle_dict, update2db
@@ -88,6 +89,7 @@ def add_probe(request):
                 errors.append('The probe has been exist!')
     return render_to_response('add_probe.html',{'errors':errors,'provinces':provinces},context_instance=RequestContext(request))
 
+
 def sep_page(data,offset):
     paginator = Paginator(data,20)
     try:
@@ -109,7 +111,10 @@ def show_probe(request):
     probe = probe.order_by('province')
     page = request.GET['page']
     contacts = sep_page(probe,page)
-    return render_to_response('search_probe_result.html',{'errors':errors,'pro':contacts},context_instance=RequestContext(request))
+    lst = []
+    for i in range(1,contacts.paginator.num_pages):
+        lst.append(i)
+    return render_to_response('search_probe_result.html',{'lst':lst,'pro':contacts},context_instance=RequestContext(request))
 
 
 @login_required
@@ -119,7 +124,10 @@ def show_ident(request):
     ident = ident.order_by('icao')
     page = request.GET['page']
     contacts = sep_page(ident,page)
-    return render_to_response('search_ident_result.html',{'errors':errors,'idt':contacts},context_instance=RequestContext(request))
+    lst = []
+    for i in range(1,contacts.paginator.num_pages+1):
+        lst.append(i)
+    return render_to_response('search_ident_result.html',{'lst':lst,'idt':contacts},context_instance=RequestContext(request))
 
 @login_required
 def show_position(request):
@@ -128,7 +136,10 @@ def show_position(request):
     position = position.order_by('seen')
     page = request.GET['page']
     contacts = sep_page(position,page)
-    return render_to_response('search_position_result.html',{'errors':errors,'po':contacts},context_instance=RequestContext(request))
+    lst = []
+    for i in range(1,contacts.paginator.num_pages+1):
+        lst.append(i)
+    return render_to_response('search_position_result.html',{'errors':errors,'po':contacts,'lst':lst},context_instance=RequestContext(request))
 
 @login_required
 def show_vector(request):
@@ -137,7 +148,10 @@ def show_vector(request):
     vector = vector.order_by('seen')
     page = request.GET['page']
     contacts = sep_page(vector,page)
-    return render_to_response('search_vector_result.html',{'ve':contacts},context_instance=RequestContext(request))
+    lst = []
+    for i in range(1,contacts.paginator.num_pages+1):
+        lst.append(i)
+    return render_to_response('search_vector_result.html',{'ve':contacts,'lst':lst},context_instance=RequestContext(request))
 
 
 

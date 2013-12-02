@@ -1,3 +1,4 @@
+
 {% extends "index.html" %}
 {% block title %}kml_parse{% endblock %}
 {% block content %}
@@ -9,9 +10,11 @@
   {% endfor %}
 </ul>
 {% endif %}
+<div class="content">
   <form action="" method="post" enctype="multipart/form-data" class="db">
     {% csrf_token %}
     chose file:<input type="file" name="filename"><br />
     <input type="submit" name="Submit" value="upload">
   </form>
+  </div>
 {% endblock %}

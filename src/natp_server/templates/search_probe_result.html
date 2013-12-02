@@ -3,15 +3,22 @@
 {% block content %}
  <div class="content">
    {% if pro %}
+   <table class="page"><tr>
    {% if pro.has_previous %}
-      <a href="?page=1">首页</a>
-      <a href="?page={{pro.previous_page_number}}">上一页</a>
+        <td><a href="?page=1">首页</a></td>
+       <td><a href="?page={{pro.previous_page_number}}">上一页</a></td>
    {% endif %}
-   Page {{pro.number}} of {{pro.paginator.num_pages}}
+  <td>第{{pro.number}}页      共{{pro.paginator.num_pages}}页</td>
    {% if pro.has_next %}
-         <a href="?page={{pro.next_page_number}}">下一页</a>
-        <a href="?page={{pro.paginator.num_pages}}">尾页</a>
+         <td><a href="?page={{pro.next_page_number}}">下一页</a></td>
+        <td><a href="?page={{pro.paginator.num_pages}}">尾页</a></td>
    {% endif %}
+    <form action="" method="get">
+    <td><table class="page"><tr><td>
+      <input type="text" name="page" class="gobutton"></td>
+            <td><input type="submit" name="go" value="Go" class="gobutton">
+            </td></tr></table></td></tr>
+   </form></table>
    <table border="1">
      <tr background-color:#CCCCFF>
        <th>Probe_name</th>
@@ -20,9 +27,9 @@
      </tr>
      {% for p in pro %}
      <tr>
-       <td>{{p.probe_name}}</td>
-       <td>{{p.province}}</td>
-       <td>{{p.gps}}</td>
+       <td class="data_table">{{p.probe_name}}</td>
+       <td class="data_table">{{p.province}}</td>
+       <td class="data_table">{{p.gps}}</td>
      </tr>
      {% endfor %}
    </table>
