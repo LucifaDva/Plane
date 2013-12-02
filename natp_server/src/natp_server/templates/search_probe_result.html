@@ -1,0 +1,40 @@
+{% extends "index.html" %}
+{% block title %}探针查询结果{% endblock %}
+{% block content %}
+ <div class="content">
+   {% if pro %}
+   <table class="page"><tr>
+   {% if pro.has_previous %}
+        <td><a href="?page=1">首页</a></td>
+       <td><a href="?page={{pro.previous_page_number}}">上一页</a></td>
+   {% endif %}
+  <td>第{{pro.number}}页      共{{pro.paginator.num_pages}}页</td>
+   {% if pro.has_next %}
+         <td><a href="?page={{pro.next_page_number}}">下一页</a></td>
+        <td><a href="?page={{pro.paginator.num_pages}}">尾页</a></td>
+   {% endif %}
+    <form action="" method="get">
+    <td><table class="page"><tr><td>
+      <input type="text" name="page" class="gobutton"></td>
+            <td><input type="submit" name="go" value="Go" class="gobutton">
+            </td></tr></table></td></tr>
+   </form></table>
+   <table border="1">
+     <tr background-color:#CCCCFF>
+       <th>Probe_name</th>
+       <th>Province</th>
+       <th>GPS</th>
+     </tr>
+     {% for p in pro %}
+     <tr>
+       <td class="data_table">{{p.probe_name}}</td>
+       <td class="data_table">{{p.province}}</td>
+       <td class="data_table">{{p.gps}}</td>
+     </tr>
+     {% endfor %}
+   </table>
+   {% else %}
+      <h2>查询结果个数为0</h2>
+    {% endif %}
+ </div>
+{% endblock %}
