@@ -1,12 +1,12 @@
 Natp项目
 环境要求：
-    Ubuntu 12.04
-    Python2.7   GNURadio/RTL-SDR dependencies
-    probe package (local configure files,command line tools-modes_probe)
-    Restful Web Service:Nginx+uWsgi+Django
+  Ubuntu 12.04
+  Python2.7   GNURadio/RTL-SDR dependencies
+  probe package (local configure files,command line tools-modes_probe）
+  Restful Web Service:Nginx+uWsgi+Django
     MySQL
     Google Earth
-环境实现：
+  环境实现：
     Python 2.7 用 Ubuntu 自带即可
     安装 GNURadio库：
         方法1: 下载最新源码http://gnuradio.org/redmine/projects/gnuradio/wiki 
