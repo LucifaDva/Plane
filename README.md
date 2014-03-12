@@ -48,7 +48,12 @@ Natp项目
         参考：http://wiki.ubuntu.com.cn/Google_Earth 
 NATP_SERVER:
     信息汇聚检索服务，modes信息导出到KML文件中，DB Schema设计（）
-    接口report接收natp_probe汇报的请求；解析请求中的SQL记录后，写入MySQL数据库中；页面展示信息；接口定时更新kml输出；部署时采用https;查询时采用memcached缓存；
+    接口report接收natp_probe汇报的请求；
+    解析请求中的SQL记录后，写入MySQL数据库中；
+    页面展示信息；
+    接口定时更新kml输出；
+    部署时采用https;
+    查询时采用memcached缓存；
     
     
     
