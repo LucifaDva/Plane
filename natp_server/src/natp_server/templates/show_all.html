@@ -1,0 +1,72 @@
+{% extends "base.html"%}
+{% block title %}{{ident.ident}}次航班信息{% endblock %}
+{% block content %}
+<div class="all">
+  <div class="show_all">
+    <div class="show_all_title">{{ident.ident}}次航班信息</div>
+    <div class="show_all_table">
+    <a href="/show/info">&lt&lt返回
+      <div class="show_all_nav">
+      <div class="show_all_page">
+        <span class="first">
+          <a href="?ident={{ident.id}}&page=1">首页</a>
+        </span>
+        {% if page_vectors.has_previous %}
+        <span class="pre">
+          <a href="?ident={{ident.id}}&page={{page_vectors.previous_page_number}}">上一页</a>
+        </span>
+        {% endif %}
+        <span class="curent">第{{page_vectors.number}}页/共{{page_vectors.paginator.num_pages}}页</span>
+        {% if page_vectors.has_next %}
+        <span class="next">
+          <a href="?ident={{ident.id}}&page={{page_vectors.next_page_number}}">下一页</a>
+        </span>
+        {% endif %}
+        <span class="last">
+          <a href="?ident={{ident.id}}&page={{page_vectors.paginator.num_pages}}">尾页</a>
+        </span>
+       </div>
+        <form action="" method="get">
+          <input type="hidden" name="icao" value="{{icao}}">
+          <input type="text" name="page" class="page_text">
+          <input type="submit" name="go" value="Go" class="go"></form>
+      </div>
+
+      <div class="show_all_content">
+        {% if page_vectors %}
+        <table class="all_result">
+          <tr>
+            <th class="all_label">航班</th>
+            <th class="all_label">水平速度</th>
+            <th class="all_label">方向</th>
+            <th class="all_label">垂直速度</th>
+            <th class="all_label">(经度|纬度|高度)</th>
+            <th class="all_label">更新时间</th>
+            <th class="all_label">探针</th>
+          </tr>
+          {% for i in page_vectors %}
+          <tr class="all_result_tr">
+            <td class="data_table_f">
+              {{ident.ident}}
+            </td>
+            <td class="data_table_f">{{i.speed}}</td>
+            <td class="data_table_f">{{i.heading}}</td>
+            <td class="data_table_f">{{i.vertical}}</td>
+            <td class="data_table_f">
+            {% if i.position %}
+            [{{i.position.lon}}<span class='separator'>|</span>{{i.position.lat}}<span class='separator'>|</span>{{i.position.alt}}]
+            {% else %}
+			[未在该时间找到位置信息]
+			{% endif %}
+			</td>            
+            <td class="data_table_f">{{i.seen | date:'Y-m-d H:i:s'}}</td>
+            <td class="data_table_f">{{i.probe.probe_name}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

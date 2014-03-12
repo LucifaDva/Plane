@@ -1,0 +1,59 @@
+{% extends "index.html" %}
+{% block title %}查询Vector{% endblock%}
+{% block content%}
+<div class="all">
+
+  <div class="form">
+    <div class="form_title">高级查询</div>
+    <a href="/search">返回</a>
+    <div class="form_table">
+    <div class="errors">
+    {% if errors %}
+    <ul>
+      {% for error in errors %}
+      <li>{{error}}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    </div>
+      <form method="post" action="">
+        {% csrf_token %}
+        <table class="center">
+          <tr>
+            <th class="label">航班:</th>
+            <td>
+              <select name="ident">
+                <option></option>
+                {% for ident in ident_idents %}
+                <option>{{ident}}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+
+          <tr>
+            <th class="label">日期:</th>
+            <td>
+              <input type='text' name="date" class='date start'></td>
+          </tr>
+          <tr>
+            <th class="label">探针:</th>
+            <td>
+              <select name="probe">
+                <option></option>
+                {% for probe in probe_names %}
+                <option>{{probe.probe_name}}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th></th>
+            <td><input type="submit" name="Submit" value="查询"></td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

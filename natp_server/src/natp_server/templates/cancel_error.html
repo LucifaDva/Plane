@@ -1,0 +1,13 @@
+{% extends "output_kml.html" %}
+{% block status%}
+   取消任务【{{taskid}}】失败。
+   	 <div class="errors">
+    	{% if errors %}
+    	<ul>
+      	{% for error in errors %}
+      	<li>{{error}}</li>
+      	{% endfor %}
+    	</ul>
+    	{% endif %}
+  	 </div>
+{% endblock %}

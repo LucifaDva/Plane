@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.conf import settings
@@ -46,7 +49,7 @@ def login(request, template_name='login.html',
             if request.session.test_cookie_worked():
                 request.session.delete_test_cookie()
 
-            return render_to_response('index.html',context_instance=RequestContext(request))
+            return HttpResponseRedirect('/')
     else:
         form = authentication_form(request)
 

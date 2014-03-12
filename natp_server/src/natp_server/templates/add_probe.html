@@ -1,26 +1,50 @@
 {% extends "index.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-<div class="content">
-  {% if errors%}
-  <ul>
-    {% for error in errors %}
-    <li><b>{{error}}</b></li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-   <form action="" method="post">
-    {% csrf_token %}
-     <p>探针名：<input type="text" name="prname"></p>
-     <p>选择探针省份:
-     <select name='pr'>
-      {% for province in provinces%}
-       <option>{{province.province}}</option>
-       {% endfor %}
-      </select>
-      </p>
-      GPS:<input type="text" name="gp">
-      <input type="submit" value="Add">
-    </form>
-   </div>
+<div class="all">
+  <div class="form">
+    <div class="form_title">添加探针</div>
+    <div class="form_table">
+     <div class="errors">
+     {% if errors %}
+     <ul>
+      {% for error in errors %}
+      <li>{{error}}</li>
+      {% endfor %}
+     </ul>
+     {% endif %}
+     </div>
+      <form action="" method="post">
+        {% csrf_token %}
+        <table class="center">
+          <tr>
+            <th class="lable">探针名:</th>
+            <td>
+              <input type="text" name="prname"></td>
+          </tr>
+          <tr>
+            <th class="lable">省份:</th>
+            <td>
+              <select class="add" name='province'>
+                <option></option>
+                {% for province in provinces%}
+                <option>{{province.province}}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th>GPS:</th>
+            <td>
+              <input type="text" name="gps"></td>
+          </tr>
+          <tr>
+          <th></th>
+          <td><input type="submit" value="添加" class="add"></td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

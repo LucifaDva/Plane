@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from django.conf.urls import patterns, include, url
 
 # Uncomment the next two lines to enable the admin:
@@ -7,8 +10,11 @@ from django.contrib import admin
 admin.autodiscover()
 import views, authorize, search, kml
 from django.views.decorators.cache import cache_page
+import django
+import settings
 
 urlpatterns = patterns('',
+    url(r'^static/(?P<path>.*)$',django.views.static.serve,{'document_root':settings.STATIC_ROOT}),
     # Examples:
     # url(r'^$', 'natp_server.views.home', name='home'),
     # url(r'^natp_server/', include('natp_server.foo.urls')),
@@ -24,20 +30,23 @@ urlpatterns = patterns('',
     url(r'^$',views.index),
     url(r'^natp_server/$', views.index),
     url(r'^admin/', include(admin.site.urls)),
+    
     url(r'^add_probe/$',views.add_probe),
 
-    url(r'^show_probe/$',views.show_probe),
-    url(r'^show_ident/$',cache_page(views.show_ident,60)),
-    url(r'^show_position/$',cache_page(views.show_position,60)),
-    url(r'^show_vector/$', cache_page(views.show_vector,60)),
-
-    url(r'^save_db/$', views.update_from_file),
     url(r'^report/$', views.update_from_report),
+    
+    
+    url(r'^show/info/$', views.show_info),
+    url(r'^show/all/$', views.show_all),
+    url(r'^show/probe/$', views.show_probe),
+    
     url(r'^kml/$', kml.output_kml),
+    url(r'^kml/cancel/$', kml.cancel_task),
+    url(r'^kml/readkml/$', kml.read_from_url),
+    url(r'^kml/readimg/$', kml.read_img),
+    
+    url(r'^search/ident/$', search.search),
+    url(r'^search/probe/$', search.search_probe),
+    
   
-    url(r'^search_probe/$',search.search_probe),
-    url(r'^search_position/$',search.search_position),
-    url(r'^search_vector/$',search.search_vector),
-    url(r'^search_ident/$',search.search_ident),
-
 )

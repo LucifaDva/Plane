@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from models import *
@@ -6,161 +9,204 @@ from django.http import HttpResponseRedirect
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 
-
-
-
+import memcache
+from util import _parse
+from datetime import datetime, timedelta
+from views import sep_page
 
 @login_required
+def search(request):
+    errors = []
+    ident_idents = Ident.objects.exclude(ident='').values_list('ident', flat=True).distinct().order_by('ident')
+    
+    if 'ident' not in request.GET:
+        return render(request, 'search.html', {'idents':ident_idents})
+    
+    q_ident = request.GET['ident']
+    idents = Ident.objects.filter(ident__icontains=q_ident)
+    
+    if not idents:
+        errors.append('need a valid ident')
+        return render(request, 'search.html', {'idents':ident_idents, 'errors':errors})
+    
+    try:
+        page = request.GET['page']
+    except KeyError:
+        page = 1
+    
+    page_idents = sep_page(idents, page)
+    
+    "查询该ident航班的所有icao信息"
+    for ident in page_idents.object_list:
+        _icao = ident.icao
+        _order = ident.order
+        start_time = ident.created
+        end_time = ident.updated
+        
+        if _order <= 1:
+            ident_vectors = \
+                Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).order_by('-seen')
+        else:
+            ident_vectors = \
+                Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).filter(seen__gte=start_time).order_by('-seen')
+                
+        if not ident_vectors.exists():
+            continue
+        
+        last_vector = ident_vectors[0]
+        ident.detail = last_vector
+    return render(request, 'search_result.html', {'icao_lst':page_idents, 'ident':q_ident})
+
+
 def search_probe(request):
-    pro = Probe.objects.all()
-    if 'pbname' in request.POST:
-        pbname = request.POST['pbname']
-    else:
-        pbname = ""
-    if 'prov' in request.POST:
-        province = request.POST['prov']
-    else:
-        province = ""
-    if 'gps' in request.POST:
-        gps = request.POST['gps']
-    else:
-        gps = ""
-    if not pbname and not province and not gps:
-        return render_to_response('search_probe.html',context_instance=RequestContext(request))
-    if  pbname:
-        pro = pro.filter(probe_name=pbname)
-    if province:
-        pro = pro.filter(province=province)
-    if gps:
-        pro = pro.filter(gps=gps)
-       
-    return render_to_response('search_probe_result.html',{'pro':pro},context_instance=RequestContext(request))
 
-
-@login_required
-def search_position(request):
-    probes = Probe.objects.all()
-    if 'icao' in request.POST:
-        icao = request.POST['icao']
-    else:
-        icao = ""
-    if 'seen' in request.POST:
-        seen = request.POST['seen']
-    else:
-        seen = ""
-    if 'alt' in request.POST:
-        alt = request.POST['alt']
-    else:
-        alt = ""
-    if 'lat' in request.POST:
-        lat = request.POST['lat']
-    else:
-        lat = ""
-    if 'lon' in request.POST:
-        lon = request.POST['lon']
-    else:
-        lon = ""
-    if 'probe' in request.POST:
-        pr = request.POST['probe']
-        if pr:
-            probe = Probe.objects.get(probe_name=pr)
-        else:
-            probe = ""
-    else:
-        probe = ""
-    if not icao and not seen and not alt and not lat and not lon and not probe:
-        return render_to_response('search_position.html',{'probes':probes},context_instance=RequestContext(request))    
-    po = Position.objects.all()
-    if icao:
-        po = po.filter(icao=icao)
-    if seen:
-        po = po.filter(seen=seen)
-    if alt:
-        po = po.filter(alt=alt)
-    if lat:
-        po = po.filter(lat=lat)
-    if  lon:
-        po = po.filter(lon=lon)
-    if probe:
-        po = po.filter(probe=probe)
+    errors = []
+    probe_name = ''
     
-    return render_to_response('search_position_result.html',{'po':po,'probes':probes},context_instance=RequestContext(request))
-
-@login_required
-def search_vector(request):
-    probes = Probe.objects.all()
-    ve = Vector.objects.all()
-    if 'icao' in request.POST:
-        icao = request.POST['icao']
-    else:
-        icao = ""
-    if 'seen' in request.POST:
-        seen = request.POST['seen']
-    else:
-        seen = ""
-    if 'speed' in request.POST:
-        speed = request.POST['speed']
-    else:
-        speed = ""
-    if 'heading' in request.POST:
-        heading = request.POST['heading']
-    else:
-        heading = ""
-    if 'vertical' in request.POST:
-        vertical = request.POST['vertical']
-    else:
-        vertical = ""
-    if 'probe' in request.POST:
-        pr = request.POST['probe']
-        if pr:
-            probe = Probe.objects.get(probe_name=pr)
-        else:
-            probe = ""
-    else:
-        probe = ""
-    if not icao and not seen and not speed and not heading and not vertical and not probe:
-       return render_to_response('search_vector.html',{'probes':probes},context_instance=RequestContext(request))
-    if icao:
-        ve = ve.filter(icao=icao)
-    if seen:
-        ve = ve.filter(seen=seen)
-    if speed:
-        ve = ve.filter(speed=speed)
-    if heading:
-        ve = ve.filter(heading=heading)
-    if vertical:
-        ve = ve.filter(vertical=vertical)
-    if probe:
-        ve = ve.filter(probe=probe)
-    return render_to_response('search_vector_result.html',{'ve':ve},context_instance=RequestContext(request))
+    try:
+        page = request.REQUEST['page']
+    except KeyError:
+        page = 1
+        
+    try:
+        probe_name = request.REQUEST['prname']
+    except KeyError:
+        pass
     
-
+    try:
+        probe_object = Probe.objects.get(probe_name__iexact=probe_name)
+    except (Probe.DoesNotExist, Probe.MultipleObjectsReturned):
+        errors.append('need a valid probe name')
+        return render(request, 'show_info_with_probe.html', {'errors':errors})
+    
+    idents = Ident.objects.exclude(ident='').filter(probe=probe_object).order_by('-updated')
+    page_idents = sep_page(idents, page)
+    
+    for ident in page_idents.object_list:
+        _icao = ident.icao
+        _order = ident.order
+        start_time = ident.created
+        end_time = ident.updated
+        
+        if _order <= 1:
+            ident_vectors = \
+            Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).order_by('-seen')
+        else:
+            ident_vectors = \
+                Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).filter(seen__gte=start_time).order_by('-seen')
+        if not ident_vectors.exists():
+            continue
+        last_vector = ident_vectors[0]
+        ident.detail = last_vector
+    
+    return render(request, 'show_info_with_probe.html', {'errors':errors, 'probe_name':probe_name, 'page_idents':page_idents})
+        
 @login_required
-def search_ident(request):
-    idt = Ident.objects.all()
-    probes = Probe.objects.all()
-    if 'icao' in request.POST:
-        icao = request.POST['icao']
+def advanced_search(request):
+   
+    errors = []
+    ident_idents = Ident.objects.exclude(ident='').values_list('ident', flat=True).distinct().order_by('ident')
+    probe_names = Probe.objects.order_by('province')
+    
+    # get
+    if request.method == 'GET' and 'ident' not in request.GET:
+        return render(request, 'advance_search.html', {'errors': errors, 'ident_idents':ident_idents, 'probe_names':probe_names})
     else:
-        icao = ""
+        # handle page
+        pass
+    
+    
+    # post
+    
+    q_ident = q_date = q_probe = ''
+
     if 'ident' in request.POST:
-        ident = request.POST['ident']
-    else:
-        ident = ""
+        q_ident = request.POST['ident']
+    
+    if 'date' in request.POST:
+        q_date = request.POST['date']
+        
+    if 'probe' in request.POST:
+        q_probe = request.POST['probe']
+    
+    request_type = int(bool(q_ident))*4 + int(bool(q_probe))*2 + int(bool(q_date))*1
+    
+    
+    # 0
+    if request_type == 0:
+        errors.append('need one condition at least.')
+        return render(request, 'advance_search.html', {'errors': errors, 'ident_idents':ident_idents, 'probe_names':probe_names})
+    
+    # 1 date
+    if request_type == 1:
+        pass
+    
+    # 2 probe
+    if request_type == 2:
+        probe_objects = Probe.objects.filter(probe_name=q_probe)
+        probe_object = probe_objects[0]
+        
+        ident_objects = Ident.objects.filter(probe_)
+        
+    # 3 probe & date
+    
+    # 4 ident
+    if reqeust_type == 4:
+        pass
+    
+        
+    # 必须填写ident
+    if not ident:
+        errors.append('请选择一个航班号进行查询')
+        return render_to_response('advance_search.html',{'probes':probes,'idents':idents, 'errors': errors},context_instance=RequestContext(request)) 
+        
+    if 'seen' in request.POST:
+        seen = request.POST['seen']
+
     if 'probe' in request.POST:
         pr = request.POST['probe']
-        if pr:
-            probe = Probe.objects.get(probe_name=pr)
-        else:
-            probe = ""
+        probe = Probe.objects.filter(probe_name=pr)
+        if not probe:
+            probe = ''
+    
+    vets = mc.get('mc_vectors')
+    if vets:
+        vectors = vets
     else:
-        probe=""
-    if not icao and not ident and not probe:
-       return render_to_response('search_ident.html',{'probes':probes},context_instance=RequestContext(request))
-    if icao:
-        idt = idt.filter(icao=icao)
-    if ident:
-        idt = idt.filter(ident=ident)
+        vectors = Vector.objects.all()
+        mc.set('mc_vectors', vectors)
+        
+    filted_idents = idents.filter(ident=ident)
+    ident_icaos = []
+    for _ident in filted_idents:
+        ident_icaos.append(_ident.icao)
+        
+    vectors = vectors.filter(icao__in=ident_icaos)
+    
+    if seen:
+        vectors = vectors.filter(seen__startswith=seen)
     if probe:
-        idt = idt.filter(probe=probe)
-    return render_to_response('search_ident_result.html',{'idt':idt},context_instance=RequestContext(request))
+        vectors = vectors.filter(probe=probe)
+    
+    vectors = vectors.order_by('-seen')
+    date_list = []
+    for d in vectors:
+        d.ident = ident
+        icao = d.icao
+        
+        # 为每一个vector寻找一个position, 误差在60s内
+        stamp = _parse(d.seen)
+        start = d.seen
+        end = stamp + timedelta(seconds=60)
+        
+        position_60 = Position.objects.filter(icao=icao,probe=d.probe,seen__range=(start,end))
+        if position_60:
+            d.position = position_60[0]
+        
+        # date
+        d.date = d.seen[:10]
+        if d.date not in date_list:
+            d.flag = 1
+            date_list.append(d.date)
+    
+    return render_to_response('advance_search_result.html',{'ve':vectors},context_instance=RequestContext(request))

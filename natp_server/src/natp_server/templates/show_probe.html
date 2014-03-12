@@ -1,0 +1,61 @@
+{% extends "base.html"%}
+{% block title %}探针信息{% endblock %}
+{% block content %}
+<div class="all">
+  <div class="show_info">
+    <div class="show_info_title">
+    所有探针
+     <a href="/add_probe" class="advance_link">添加</a>
+    </div>
+    <div class="show_info_table">
+      <div class="show_info_nav">
+      <div class="show_info_page">
+        <span class="first">
+          <a href="?page=1">首页</a>
+        </span>
+        {% if page_probes.has_previous %}
+        <span class="pre">
+          <a href="?page={{page_probes.previous_page_number}}">上一页</a>
+        </span>
+        {% endif %}
+        <span class="curent">第{{page_probes.number}}页/共{{page_probes.paginator.num_pages}}页</span>
+        {% if page_probes.has_next %}
+        <span class="next">
+          <a href="?page={{page_probes.next_page_number}}">下一页</a>
+        </span>
+        {% endif %}
+        <span class="last">
+          <a href="?page={{page_probes.paginator.num_pages}}">尾页</a>
+        </span>
+       </div>
+        <form action="" method="get">
+          <input type="text" name="page" class="page_text">
+          <input type="submit" value="Go" class="go"></form>
+      </div>
+
+      <div class="show_info_content">
+        {% if page_probes %}
+        <table class="info_result">
+          <tr>
+            <th class="info_label">探针</th>
+            <th class="info_label">省份</th>
+            <th class="info_label">gps</th>
+            <th class="info_label">创建时间</th>
+          </tr>
+          {% for probe in page_probes %}
+          <tr class="info_result_tr">
+            <td class="data_table_f">
+              <a href="/search/probe?prname={{probe.probe_name}}">{{probe.probe_name}}</a>
+            </td>
+            <td class="data_table_f">{{probe.province}}</td>
+            <td class="data_table_f">{{probe.gps}}</td>
+            <td class="data_table_f">{{probe.created | date:'Y-m-d H:i:s'}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

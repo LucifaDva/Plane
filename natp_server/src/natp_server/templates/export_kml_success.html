@@ -1,0 +1,31 @@
+
+{% extends "index.html" %}
+{% block title %}export kml{% endblock %}
+{% block content %}
+<div class="all">
+  <div class='form'>
+	<div class="form_title">
+		查看飞行轨迹
+	</div>
+	<div class="form_table">
+	 <div class="errors">
+    	{% if errors %}
+    	<ul>
+      	{% for error in errors %}
+      	<li>{{error}}</li>
+      	{% endfor %}
+    	</ul>
+    	{% endif %}
+  	 </div>
+  	 <div class="kml_start">
+   <h3>导出任务将在{{wait_time}}s后开始...</h3>
+   	将url复制到Google Earth中<br />
+	{{ check_url }}
+	 </div>
+	 <div class="kml_stop">
+	<a href="cancel?taskid={{ taskid }}" target="_blank"}>停止任务</a>
+	 </div>
+	</div>
+  </div>
+</div>
+{% endblock %}

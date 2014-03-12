@@ -1,159 +1,93 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from django.shortcuts import render
 from django.http import HttpResponse
+
+from util import _validate, _parse, kml_link, output_dir
+from tasks import output, wait_time, genkml, terminate_task
+from datetime import datetime
 from django.core.servers.basehttp import FileWrapper
-from django.db.models import Count
-
-from datetime import datetime, timedelta
-from models import Position, Ident, Vector, Probe
-
-from util import _format
 
 
+
+
+def read_img(request):
+    img = output_dir + '/' + 'airports.png'
+    with open(img, 'r') as f:
+        img_data = f.read()
+    
+    return HttpResponse(img_data, mimetype="image/png")
+
+def read_from_url(request):
+    if request.method == "GET":
+        filename = request.GET['filename']
+    else:
+        return HttpResponse('empty', content_type='text/plain')
+    path = output_dir + '/' + filename
+    
+    try:
+        f = open(path)
+        data = f.read()
+    except:
+        data = ''
+        
+    return HttpResponse(data, content_type='text/plain')
 
 def output_kml(request):
     errors = []
-    retstr = genkml(0, 0, 0)
-    filename = write_to_xml(retstr)
-    try:
-        f = open(filename)
-        response = HttpResponse(FileWrapper(f), content_type='application/force-download')
-        response['content-disposition'] = 'attachment; filename=%s' % f.name
-        return response
-    except:
-        errors.append("error in download xml file")
-    return render(request, 'errors.html', {'errors':errors})
 
-
-
-DEFAULT_FRESH_TIME = 180   # 30s
-
-# FORMART: DDDDs / DDDDm / DDDDh
-def parse_period(period):
-    ret = DEFAULT_FRESH_TIME
-    try:
-        if period.endswith('s'):
-            ret = int(period[:len(period)-1])
-        elif period.endswith('m'):
-            ret = 60 * int(period[:len(period)-1])
-        elif period.endswith('h'):
-            ret = 3600 * int(period[:len(period)-1])
-    except Exception, err:
-        print 'Parse configured period failed: %s' % period
-        ret = DEFAULT_FRESH_TIME
+    if request.method == "POST":
+        filename = datetime.now().strftime('%Y%m%d%H%M%S') + '.kml'
+        path = output_dir + '/' + filename
+        check_url = kml_link + filename
         
-    return ret
-
-def write_to_xml(_retstr):
-    file_name = 'output/trace_out.kml'
-    with open(file_name, 'w') as f:
-        f.write(_retstr)      # overwrite
-    return file_name
-
-def output(start, end, period):
-    """
-    time format:
-        datetime
-    period: 
-        every period time to refresh the kml file
-        format: xh / xm / xs
-    """
-    all = end - start
-    _period = period
-    _all = end-start
-    
-    back = front = start
-    _seconds = 0
-    while True:
-        back = front
-        front += timedelta(seconds=_period)
-        if front < end:
-            genkml(_format(back), _format(front))
-        elif front > end:
-            front = end
-            genkml(_format(back), _format(front))
-            break
-        else:
-            break
-
-# time format (2013, 11, 27, 15, 3, 16, 772617)
-def genkml(start, end):
-    """
-    time format:
-        datetime    
-    period: 
-        every period time to refresh the kml file
-        format: xh / xm / xs
-    """
-    retstr="""<?xml version="1.0" encoding="UTF-8"?>\n\
-    <kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n\t<Style id="airplane">\n\t\t<IconStyle>\n\t\t\t<Icon><href>airports.png</href></Icon>\n\t\t</IconStyle>\n\t\
-    </Style>\n\t<Style id="rangering">\n\t<LineStyle>\n\t\t<color>9f4f4faf</color>\n\t\t<width>2</width>\n\t</LineStyle>\n\t</Style>\n\t\
-    <Style id="track">\n\t<LineStyle>\n\t\t<color>501400ff</color>\n\t\t<width>4</width>\n\t</LineStyle>\n\t</Style>"""
-
-  
-    #==========test=========
-    _start = start
-    _end = end
-    _start = '2013-11-28 14:00:00'
-    _end = '2013-11-28 15:00:00'
-
-    retstr +=  """\t<Folder>\n\t\t<name>Aircraft locations</name>\n\t\t<open>0</open>"""
-    
-    temp = Position.objects.filter(seen__gt=_start).filter(seen__lt=_end)
-    # get top 5 planes
-    icaos_sort_by_count = temp.values('icao').annotate(icao_count=Count('icao')).order_by('icao_count')[:5]
-    
-    for ks in icaos_sort_by_count:
-        _icao = ks['icao']
-        positions = Position.objects.filter(icao__exact=_icao).order_by('-seen')
-        if not positions:
-            pass
-        else:
-            i=0
-            trackstr = ""
-            for p in positions:
-                if i==0:
-                    lat = p.lat if p.lat is not None else 0
-                    lon = p.lon if p.lon is not None else 0
-                    alt = float(p.alt) if p.alt is not None else 0
-                trackstr += " %s,%s,%f" % (p.lon, p.lat, float(p.alt)*0.3048)
-                i += 1
-        metric_alt = 0.3048*alt
-        # get metadata
-        _ident = Ident.objects.filter(icao__exact=_icao)
-        ident = ""
-        if _ident:
-            ident = _ident[0].ident
+        sdate = request.POST.get('startdate')
+        stime = request.POST.get('starttime')
+        edate = request.POST.get('enddate')
+        etime = request.POST.get('endtime')
+        period_s = request.POST.get('period')
+        starttime = sdate + ' ' + stime
+        endtime = edate + ' ' + etime
         
-        _vector = Vector.objects.filter(icao__exact=_icao).order_by('seen')[:1]
-        seen = 0
-        speed = 0
-        heading = 0
-        vertical = 0
-        if  _vector:
-            seen = _vector[0].seen
-            speed = _vector[0].speed
-            heading = _vector[0].heading
-            vertical = _vector[0].vertical
+        if not _validate(starttime) or not _validate(endtime):
+            errors.append("input is EMPTY or FORMAT is not CORRECT.")
+            return render(request, 'output_kml.html', {'errors':errors})
 
-            
-        retstr += "\n\t\t<Placemark>\n\t\t\t<name>%s</name>\n\t\t\t<Style><IconStyle>\
-        <heading>%i</heading></IconStyle></Style>\n\t\t\t<styleUrl>#airplane</styleUrl>\n\t\t\t\
-        <description>\n\t\t\t\t<![CDATA[Altitude: %s<br/>Heading: %i<br/>Speed: %i<br/>Vertical speed: %i<br/>\
-        ICAO: %x<br/>Last seen: %s]]>\n\t\t\t</description>\n\t\t\t<Point>\n\t\t\t\t\
-        <altitudeMode>absolute</altitudeMode>\n\t\t\t\t<extrude>1</extrude>\n\t\t\t\t\
-        <coordinates>%s,%s,%i</coordinates>\n\t\t\t</Point>\n\t\t</Placemark>" \
-        % (ident, heading, alt, heading, speed, vertical, _icao, seen, lon, lat, metric_alt, )
-    
-        retstr += "\n\t\t<Placemark>\n\t\t\t<styleUrl>#track</styleUrl>\n\t\t\t<LineString>\n\t\t\t\t\
-        <extrude>0</extrude>\n\t\t\t\t<altitudeMode>absolute</altitudeMode>\n\t\t\t\t\
-        <coordinates>%s</coordinates>\n\t\t\t</LineString>\n\t\t</Placemark>" % (trackstr,)
+        """        
+        if mode == 'static':
+            genkml(starttime, endtime, path)
+            try:
+                f = open(path)
+                response = HttpResponse(FileWrapper(f), content_type='application/force-download')
+                response['content-disposition'] = 'attachment; filename=%s' % filename
+                return response
+            except:
+                errors.append("error in download xml file")
+                return render(request, 'output_kml.html', {'errors':errors})
+        """
         
-    retstr += '\n\t</Folder>\n</Document>\n</kml>'
-#    write_to_xml(retstr)
-    return retstr
+        # dynamic
+        try:
+            period_s = int(period_s)  #period_s is none
+        except SyntaxError:
+            errors.append("period syntax error")
+            return render(request, 'output_kml.html', {'errors':errors})
 
-if __name__ == "__main__":
-    start = ""
-    end = ""
-    period = ""
-    genkml(start, end, period)
+        print "%s - %s" % (starttime, endtime)
+
+        task = output.delay(starttime, endtime, period_s, path)
+        return render(request, 'export_kml_success.html', {'check_url':check_url, 'wait_time':wait_time, 'taskid':task.id})
+    
+    return render(request, 'output_kml.html', {'errors':errors})
+
+def cancel_task(request):
+    if request.method == 'GET':
+        taskid = request.GET['taskid']
+        terminate_task(taskid)
+        return render(request, 'cancel_success.html', {'taskid':taskid})
+    else:
+        errors.append("this method only be used by get.")
+    return render(request, 'cancel_error.html', {'taskid':taskid, 'errors':errors})
+        
+        

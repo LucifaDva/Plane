@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{% endblock %}
+{% block content %}
+<div class="all">
+  <div class="form">
+    <div class="form_title">
+    查询
+    </div>
+    
+    <div class="form_table">
+     <div class="errors">
+     {% if errors %}
+     <ul>
+      {% for error in errors %}
+      <li>{{error}}</li>
+      {% endfor %}
+     </ul>
+     {% endif %}
+     </div>
+      <form method="get" action="">
+        <input type="hidden" name="page" value="1">
+        <table class="center">
+          <tr>
+            <th class="label">航班:</th>
+            <td>
+              <select name="ident">
+                <option></option>
+                {% for i in idents %}
+                <option>{{i}}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          <tr>
+          	<td></td>
+            <td>
+              <input type="submit" value="搜索"></td>
+          </tr>
+        </table>
+      </form>
+    </div>  <!-- search_form_table -->
+  </div>    <!-- search_form -->
+</div>
+{% endblock %}

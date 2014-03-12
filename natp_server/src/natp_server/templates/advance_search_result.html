@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+{% block title %}探针查询结果{% endblock %}
+{% block content %}
+ <div class="all">
+   {% if ve %}
+   <div class="left-30">
+     <h2>查询结果</h2><br/>
+   </div>
+	<a href="/advance_search">返回</a>
+   <table border="1">
+     <tr background-color:#CCCCFF>
+       <th>Ident</th>
+       <th>Date</th>
+       <th>Seen</th>
+       <th>Speed</th>
+       <th>Heading</th>
+       <th>vertical</th>
+       <th>Probe_name</th>
+       <th>Position_(经度，纬度，高度)</th>
+     </tr>
+     {% for p in ve %}
+     {% if p.ident %}
+     {% if p.flag %}
+     <tr>
+       <td class="data_table_f"><a href="/search/?page=1&ident={{p.ident}}">{{p.ident}}</td>
+       <td class="data_table_f">{{p.date}}</a></td>
+       <td class="data_table_f">{{p.seen}}</td>
+       <td class="data_table_f">{{p.speed}}</td>
+       <td class="data_table_f">{{p.heading}}</td>
+       <td class="data_table_f">{{p.vertical}}</td>
+       <td class="data_table_f">{{p.probe.probe_name}}</td>
+       {% if p.position %}
+       <td class="data_table_f">( {{p.position.lon}}, {{p.position.lat}}, {{p.position.alt}} )</td>
+       {% else %}
+       <td class="data_table_f">未找到1分钟内位置记录</td>
+       {% endif %}
+     </tr>
+     {% else %}
+     <tr>
+       <td class="data_table"></td>
+       <td class="data_table"></td>
+       <td class="data_table">{{p.seen}}</td>
+       <td class="data_table">{{p.speed}}</td>
+       <td class="data_table">{{p.heading}}</td>
+       <td class="data_table">{{p.vertical}}</td>
+       <td class="data_table">{{p.probe.probe_name}}</td>
+       {% if p.position %}
+       <td class="data_table">( {{p.position.lon}}, {{p.position.lat}}, {{p.position.alt}} )</td>
+       {% else %}
+       <td class="data_table">未找到1分钟内位置记录</td>
+       {% endif %}
+     </tr>
+     {% endif %}
+     {% endif %}
+     {% endfor %}
+   </table>
+   {% else %}
+       <h2>查询结果个数为0</h2>
+   {% endif %}
+   
+ </div>
+{% endblock %}

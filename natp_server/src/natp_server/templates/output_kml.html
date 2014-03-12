@@ -1,0 +1,53 @@
+
+{% extends "index.html" %}
+{% block title %}export kml{% endblock %}
+{% block content %}
+<div class="all">
+  <div class='form'>
+	<div class="form_title">
+		模拟飞行轨迹
+	</div>
+	<div class="form_table">
+	 <div class="errors">
+    	{% if errors %}
+    	<ul>
+      	{% for error in errors %}
+      	<li>{{error}}</li>
+      	{% endfor %}
+    	</ul>
+    	{% endif %}
+  	 </div>
+  	 <div class="kml_status">
+  	 {% block status%}{% endblock %}
+  	 </div>
+    <p class="datepair" date-language="javascript">
+      <form action="" method="POST">
+        {% csrf_token %}
+        <table class="center">
+          <tr>
+            <th class="label">时间:</th>
+            <td>
+              <input type='text'  name="startdate" class='date start'>
+              <input type='text' class="time start ui-timepicker-input" name="starttime" autocomplete="off">
+              -
+              <input type='text'  name="enddate" class="date end">
+              <input type='text'  name="endtime" class="time end ui-timepicker-input" autocomplete="off"></td>
+          </tr>
+          <tr>
+            <th class="label">间隔:</th>
+            <td>
+              <input type='text' name='period' class='period'/><span class="example">(e.g 30)</span>
+            </td>
+          </tr>
+          <tr>
+            <th></th>
+            <td><input type='submit' value='生成'/></td>
+          </tr>
+        </table>
+        
+      </form>
+    </p>
+
+  </div>
+</div>
+{% endblock %}

@@ -2,19 +2,20 @@
 {% extends "index.html" %}
 {% block title %}kml_parse{% endblock %}
 {% block content %}
-
+<div class="all">
 {% if errors %}
+<div class="all">
 <ul>
   {% for error in errors %}
     <li>{{error}}</li>
   {% endfor %}
 </ul>
 {% endif %}
-<div class="content">
   <form action="" method="post" enctype="multipart/form-data" class="db">
     {% csrf_token %}
     chose file:<input type="file" name="filename"><br />
     <input type="submit" name="Submit" value="upload">
   </form>
+  </div>
   </div>
 {% endblock %}

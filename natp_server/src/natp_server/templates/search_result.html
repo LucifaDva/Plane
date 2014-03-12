@@ -1,0 +1,66 @@
+{% extends "base.html"%}
+{% block title %}{{ident}}次航班信息{% endblock %}
+{% block content %}
+<div class="all">
+  <div class="show_info">
+    <div class="show_info_title">{{ident}}次航班信息</div>
+    <div class="show_info_table">
+      <div class="show_info_nav">
+      <div class="show_info_page">
+        <span class="first">
+          <a href="?ident={{ident}}&page=1">首页</a>
+        </span>
+        {% if icao_lst.has_previous %}
+        <span class="pre">
+          <a href="?ident={{ident}}&page={{icao_lst.previous_page_number}}">上一页</a>
+        </span>
+        {% endif %}
+        <span class="curent">第{{icao_lst.number}}页/共{{icao_lst.paginator.num_pages}}页</span>
+        {% if icao_lst.has_next %}
+        <span class="next">
+          <a href="?ident={{ident}}&page={{icao_lst.next_page_number}}">下一页</a>
+        </span>
+        {% endif %}
+        <span class="last">
+          <a href="?ident={{ident}}&page={{icao_lst.paginator.num_pages}}">尾页</a>
+        </span>
+       </div>
+        <form action="" method="get">
+          <input type="hidden" name="ident" value="{{ident}}">
+          <input type="text" name="page" class="page_text">
+          <input type="submit" value="Go" class="go"></form>
+      </div>
+
+      <div class="show_info_content">
+        {% if icao_lst %}
+        <table class="info_result">
+          <tr>
+            <th class="info_label">飞机航班</th>
+            <th class="info_label">水平速度</th>
+            <th class="info_label">方向</th>
+            <th class="info_label">垂直速度</th>
+            <th class="info_label">更新时间</th>
+            <th class="info_label">探针</th>
+          </tr>
+          {% for i in icao_lst %}
+          {% if i.detail %}
+          <tr class="info_result_tr">
+            <td class="data_table_f">
+              <a href="/show_all?ident={{i.id}}&page=1">{{i.ident}}</a>
+            </td>
+            <td class="data_table_f">{{i.detail.speed}}</td>
+            <td class="data_table_f">{{i.detail.heading}}</td>
+            <td class="data_table_f">{{i.detail.vertical}}</td>
+            <td class="data_table_f">{{i.detail.seen}}</td>
+            <td class="data_table_f">
+            <a href="#">{{i.detail.probe.probe_name}}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

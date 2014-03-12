@@ -1,54 +1,168 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from models import *
 from django.shortcuts import render_to_response
-from django.http import HttpResponseRedirect
 from django.template import RequestContext
-from django.contrib import auth
-from django import forms
-import MySQLdb
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate,login,logout
-from util import get_data, handle_dict, update2db
-from kml import genkml, write_to_xml
-from django.core.servers.basehttp import FileWrapper
+from tasks import handle_xml
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
+import json
+import memcache
+from datetime import timedelta
+from django.db import connection
+from django.http import Http404
+
+# 20
+def sep_page(data,offset):
+    paginator = Paginator(data,20)
+    try:
+        page = int(offset)
+    except ValueError:
+        page = 1
+    try:
+        contacts = paginator.page(page)
+    except (EmptyPage,InvalidPage):
+        contacts = paginator.page(paginator.num_pages)
+    return contacts
+
 
 @login_required
-def update_from_file(request):
-    errors = []
-    data = ""
-    if 'filename' in request.FILES:
-        _file = request.FILES['filename']
-        for chunk in _file.chunks():
-            data += chunk
-        sqls = handle_dict(data)
-        update_errors = update2db(sqls)
-        if not update_errors:
-            return render_to_response('save_db_success.html',context_instance=RequestContext(request))
-        else:
-            errors += update_errors
-    elif request.method == 'POST':
-        errors.append("you should choose a file as input")
-    return render_to_response('save_db.html',{'errors':errors},context_instance=RequestContext(request))
+def show_all(request):
+    """
+    显示`id`的飞机信息
+    """
+    try:
+        page = int(request.GET['page'])
+    except:
+        page = 1
 
-folder = 'xml/'            
-def update_from_report(request):
-    errors = []
-    data = request.body
-
-    # write to file
-    time_format = '%Y%m%d%H%M%S'
-    file_name = folder + datetime.now().strftime(time_format) + '.xml'
-    with open(file_name,'w') as f:
-        f.write(data)
-
-    sqls = handle_dict(data)
-    update_errors = update2db(sqls)
-    if not update_errors:
-        return render_to_response('save_db_success.html',context_instance=RequestContext(request))
+    if 'ident' not in request.GET:
+        raise Http404
     
-    return render_to_response('save_db.html',{'errors':errors},context_instance=RequestContext(request))
+    # ident表的id字段
+    ident_id = request.GET['ident']
+    ident = Ident.objects.get(id=ident_id)
+    _icao = ident.icao
+    _order = ident.order
+    start_time = ident.created
+    end_time = ident.updated
+    
+    if _order <= 1:
+        ident_vectors = \
+            Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).order_by('-seen')
+    else:
+        ident_vectors = Vector.objects.filter(icao=_icao).filter(seen__gte=start_time).filter(seen__lte=end_time)
+    
+    page_vectors = sep_page(ident_vectors, page)
+    
+    for vector in page_vectors.object_list:
+        """
+        对每一个vector进行操作，找出时间最近的position信息
+        1分钟内该飞机信息,拿出第一个
+        （seen, seen+1)
+        """
+        seen = vector.seen
+        end = vector.seen + timedelta(minutes=1)
+        positions = Position.objects.filter(icao=_icao).filter(seen__gte=seen).filter(seen__lte=end)
+        if not positions.exists():
+            continue
+        vector.position = positions[0]
+    
+    return render(request, 'show_all.html', {'page_vectors':page_vectors, 'ident':ident})
+
+
+@login_required
+def show_info(request):
+    try:
+        page = int(request.GET['page'])
+    except:
+        page = 1
+
+    idents = Ident.objects.exclude(ident='').order_by('-updated')
+    page_idents = sep_page(idents, page)
+    
+    for ident in page_idents.object_list:
+        _icao = ident.icao
+        _order = ident.order
+        start_time = ident.created
+        end_time = ident.updated
+        
+        if _order <= 1:
+            ident_vectors = \
+            Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).order_by('-seen')
+        else:
+            ident_vectors = \
+                Vector.objects.filter(icao=_icao).filter(seen__lte=end_time).filter(seen__gte=start_time).order_by('-seen')
+        if not ident_vectors.exists():
+            continue
+        last_vector = ident_vectors[0]
+        ident.detail = last_vector
+        
+    return render_to_response('show_info.html',{'icao_lst':page_idents},context_instance=RequestContext(request)) 
+
+
+def update_from_report(request):
+   
+    data = request.body
+    ip = request.META['REMOTE_ADDR']
+    handle_xml.delay(data,ip)
+    return HttpResponse('report ok')
+
+
+@login_required
+def index(request):
+    return render_to_response('index.html',context_instance=RequestContext(request))
+
+
+@login_required
+def show_probe(request):
+    
+    try:
+        page = request.GET['page']
+    except KeyError:
+        page = 1
+        
+    probes = Probe.objects.all()
+    page_probes = sep_page(probes, page)
+    
+    return render(request, 'show_probe.html', {'page_probes':page_probes})
+
+
+@login_required
+def add_probe(request):
+    errors = []
+    provinces = Province.objects.all()
+
+    if request.method == 'GET':
+        return render(request, 'add_probe.html', {'provinces':provinces})
+    
+    
+    prname = province = gps = ''
+    try:
+        prname = request.POST['prname']
+        province = request.POST['province']
+        gps = request.POST['gps']
+    except KeyError:
+        pass
+    
+    if not prname:
+        errors.append('need a probe name!')
+        return render(request, 'add_probe.html', {'provinces':provinces, 'errors':errors})
+    
+    try:
+        province_object = Province.objects.get(province=province)
+        
+    except (Province.DoesNotExist, Province.MultipleObjectsReturned):
+        errors.append('need a valid province!')
+        return render(request, 'add_probe.html', {'provinces':provinces, 'errors':errors})
+    
+    Probe.objects.create(probe_name=prname, province=province_object,gps=gps)
+    errors.append('add probe %s success.' % prname)
+    
+    return render(request, 'add_probe.html', {'provinces':provinces, 'errors':errors})
 
 
 @login_required
@@ -63,95 +177,6 @@ def delete(request):
 @login_required
 def index(request):
     return render_to_response('index.html',context_instance=RequestContext(request))
-
-
-@login_required
-def add_probe(request):
-    errors = []
-    provinces = Province.objects.all()
-    if 'prname' in request.POST and 'pr' in request.POST and 'gp' in request.POST:
-        pn = request.POST['prname']
-        p = request.POST['pr']
-        g = request.POST['gp']
-        if not pn:
-            errors.append('Input a name')
-        elif not p:
-            errors.append('Choose a Province ')
-        elif not g:
-            errors.append('Input GPS')
-        else:
-            s = Probe.objects.filter(probe_name=pn)
-            if not s:
-                probes = Probe.objects.create(probe_name=pn,province=p,gps=g)
-                probes.save()
-                return render_to_response('add_probe_success.html',context_instance=RequestContext(request))
-            else:
-                errors.append('The probe has been exist!')
-    return render_to_response('add_probe.html',{'errors':errors,'provinces':provinces},context_instance=RequestContext(request))
-
-
-def sep_page(data,offset):
-    paginator = Paginator(data,20)
-    try:
-        page = int(offset)
-    except ValueError:
-        page = 1
-    try:
-        contacts = paginator.page(page)
-    except (EmptyPage,InvalidPage):
-        contacts = paginator.page(paginator.num_pages)
-    return contacts
-
-
-
-@login_required
-def show_probe(request):
-    errors = []
-    probe = Probe.objects.all()
-    probe = probe.order_by('province')
-    page = request.GET['page']
-    contacts = sep_page(probe,page)
-    lst = []
-    for i in range(1,contacts.paginator.num_pages):
-        lst.append(i)
-    return render_to_response('search_probe_result.html',{'lst':lst,'pro':contacts},context_instance=RequestContext(request))
-
-
-@login_required
-def show_ident(request):
-    errors = []
-    ident = Ident.objects.all()
-    ident = ident.order_by('icao')
-    page = request.GET['page']
-    contacts = sep_page(ident,page)
-    lst = []
-    for i in range(1,contacts.paginator.num_pages+1):
-        lst.append(i)
-    return render_to_response('search_ident_result.html',{'lst':lst,'idt':contacts},context_instance=RequestContext(request))
-
-@login_required
-def show_position(request):
-    errors = []
-    position = Position.objects.all()
-    position = position.order_by('seen')
-    page = request.GET['page']
-    contacts = sep_page(position,page)
-    lst = []
-    for i in range(1,contacts.paginator.num_pages+1):
-        lst.append(i)
-    return render_to_response('search_position_result.html',{'errors':errors,'po':contacts,'lst':lst},context_instance=RequestContext(request))
-
-@login_required
-def show_vector(request):
-    errors=[]
-    vector = Vector.objects.all()
-    vector = vector.order_by('seen')
-    page = request.GET['page']
-    contacts = sep_page(vector,page)
-    lst = []
-    for i in range(1,contacts.paginator.num_pages+1):
-        lst.append(i)
-    return render_to_response('search_vector_result.html',{'ve':contacts,'lst':lst},context_instance=RequestContext(request))
 
 
 
