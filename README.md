@@ -1,18 +1,21 @@
-Natp项目
-环境要求：
-  Ubuntu 12.04
-  Python2.7   GNURadio/RTL-SDR dependencies
-  probe package (local configure files,command line tools-modes_probe）
-  Restful Web Service:Nginx+uWsgi+Django
-    MySQL
-    Google Earth
-  环境实现：
+<h1>Natp项目<h1>
+<h2>环境要求：<h2>
+  <ul>
+    <li>Ubuntu 12.04</li>
+    <li>Python2.7   GNURadio/RTL-SDR dependencies<li>
+    <li>probe package (local configure files,command line tools-modes_probe）</li>
+    <li>Restful Web Service:Nginx+uWsgi+Django</li>
+    <li>MySQL</li>
+    <li>Google Earth</li>
+  </ul>
+  <h3>环境实现：</h3>
     Python 2.7 用 Ubuntu 自带即可
     安装 GNURadio库：
         方法1: 下载最新源码http://gnuradio.org/redmine/projects/gnuradio/wiki 
                编译安装
-        方法2: wget http://www.sbrac.org/files/build-gnuradio •chmod +x build-gnuradio
-               ./build-gnuradio –verbose
+        方法2: wget http://www.sbrac.org/files/build-gnuradio 
+              chmod +x build-gnuradio
+              ./build-gnuradio –verbose
         GNURadio库编译安装时间较⻓长,需80-100分钟
     安装 rlt-sdr / gr-osmosdr库：
         git clone git://git.osmocom.org/rtl-sdr.git •cd rtl-sdr/
